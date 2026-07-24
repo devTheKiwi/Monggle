@@ -46,9 +46,12 @@
         color: var(--ink);
         line-height: 1.6;
         background:
-            radial-gradient(1100px 500px at 15% -5%, rgba(255,126,157,0.22), transparent 60%),
-            radial-gradient(1000px 520px at 90% 0%, rgba(155,126,240,0.20), transparent 60%),
-            radial-gradient(900px 600px at 50% 105%, rgba(39,185,154,0.12), transparent 60%),
+            radial-gradient(1100px 520px at 10% -5%, rgba(255,126,157,0.30), transparent 60%),
+            radial-gradient(1000px 520px at 94% 0%, rgba(155,126,240,0.28), transparent 60%),
+            radial-gradient(720px 520px at 80% 26%, rgba(62,155,255,0.16), transparent 60%),
+            radial-gradient(820px 560px at 16% 52%, rgba(232,163,23,0.14), transparent 62%),
+            radial-gradient(900px 560px at 88% 70%, rgba(255,98,133,0.14), transparent 60%),
+            radial-gradient(1000px 640px at 50% 108%, rgba(39,185,154,0.20), transparent 60%),
             linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
         background-attachment: fixed;
         overflow-x: hidden;
@@ -118,11 +121,13 @@
         font-size: 58px;
         font-weight: 800;
         letter-spacing: -1px;
-        background: linear-gradient(120deg, var(--coral) 0%, var(--apricot) 40%, var(--lavender) 100%);
+        background: linear-gradient(115deg, var(--coral), var(--apricot), var(--butter), var(--mint), var(--sky), var(--lavender), var(--coral));
+        background-size: 260% auto;
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
         line-height: 1.1;
+        animation: flow 9s linear infinite;
     }
     .logo-en { font-size: 17px; font-weight: 700; color: var(--ink-dim); margin-top: 6px; letter-spacing: 2px; }
     .tag { font-size: 20px; color: var(--ink-dim); max-width: 460px; margin: 20px auto 32px; font-weight: 500; }
@@ -209,15 +214,29 @@
     .fcard {
         background: var(--card); border-radius: 18px; padding: 26px;
         border: 1px solid var(--card-line); box-shadow: var(--shadow);
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        position: relative;
     }
-    .fcard:hover { transform: translateY(-5px); box-shadow: 0 16px 36px rgba(150,110,180,0.2); }
-    .fcard .ico { font-size: 30px; margin-bottom: 12px; }
+    /* 카드마다 다른 포인트 색 */
+    .fcard:nth-child(1) { --fc: #FF7E9D; --fcbg: rgba(255,126,157,0.16); }
+    .fcard:nth-child(2) { --fc: #9B7EF0; --fcbg: rgba(155,126,240,0.16); }
+    .fcard:nth-child(3) { --fc: #E8A317; --fcbg: rgba(232,163,23,0.18); }
+    .fcard:nth-child(4) { --fc: #3E9BFF; --fcbg: rgba(62,155,255,0.16); }
+    .fcard:nth-child(5) { --fc: #FF6285; --fcbg: rgba(255,98,133,0.16); }
+    .fcard:nth-child(6) { --fc: #27B99A; --fcbg: rgba(39,185,154,0.16); }
+    .fcard:hover { transform: translateY(-5px); border-color: var(--fc); box-shadow: 0 16px 36px var(--fcbg); }
+    .fcard h3 { color: var(--ink); }
+    .fcard:hover h3 { color: var(--fc); }
+    .fcard .ico {
+        font-size: 26px; width: 52px; height: 52px; margin-bottom: 14px;
+        border-radius: 15px; display: flex; align-items: center; justify-content: center;
+        background: var(--fcbg);
+    }
     .fcard h3 { font-size: 17px; margin-bottom: 6px; }
     .fcard p { font-size: 13.5px; color: var(--ink-dim); }
 
     /* ── 스킨 ── */
-    .skins { padding: 60px 20px; }
+    .skins { padding: 60px 20px; background: linear-gradient(180deg, transparent, rgba(155,126,240,0.07), transparent); }
     .skin-row { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
     .skin { text-align: center; }
     .skin .sw {
@@ -245,11 +264,12 @@
     .themes h3 { font-size: 19px; margin-bottom: 20px; }
     .dots { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
     .dot-item { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-    .dot { width: 42px; height: 42px; border-radius: 50%; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+    .dot { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,0.14); transition: transform 0.18s; }
+    .dot-item:hover .dot { transform: scale(1.12) translateY(-2px); }
     .dot-item span { font-size: 12px; color: var(--ink-dim); font-weight: 600; }
 
     /* ── 설치 ── */
-    .install { padding: 70px 20px; text-align: center; }
+    .install { padding: 70px 20px; text-align: center; background: linear-gradient(180deg, transparent, rgba(39,185,154,0.07), transparent); }
     .code {
         max-width: 640px; margin: 0 auto 14px;
         background: #1a1530; color: #7ee7c4;
@@ -291,6 +311,9 @@
 <span class="sparkle" style="left:14%; top:40%; animation-delay:0.7s; font-size:14px;">🫧</span>
 <span class="sparkle" style="left:92%; top:60%; animation-delay:1.8s;">✨</span>
 <span class="sparkle" style="left:5%;  top:66%; animation-delay:3s;   font-size:13px;">⭐️</span>
+<span class="sparkle" style="left:70%; top:8%;  animation-delay:2.1s; font-size:13px;">🌸</span>
+<span class="sparkle" style="left:26%; top:9%;  animation-delay:3.4s;">💫</span>
+<span class="sparkle" style="left:96%; top:44%; animation-delay:0.4s; font-size:12px;">🌸</span>
 
 <!-- Hero -->
 <section class="hero">
