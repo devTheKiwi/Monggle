@@ -20,7 +20,17 @@ macOS 캘린더 · 미리 알림과 바로 연결되고, 메뉴바에 오늘 날
 - **한국 공휴일** — 음력·대체공휴일 포함 (2026~2027 수록)
 - 주 시작 요일(일/월), 로그인 시 자동 시작, 자정 자동 갱신
 
-## 빌드
+## 설치 (사용자)
+
+터미널에 붙여넣기 한 줄. **Xcode 필요 없어요** — 릴리스에 올라간 빌드본을 받아 메뉴바에 바로 올립니다.
+
+```sh
+curl -sL https://raw.githubusercontent.com/devTheKiwi/Monggle/main/remote-install.sh | bash
+```
+
+공증 전이라 스크립트가 격리 속성을 벗겨 Gatekeeper 경고 없이 실행돼요. macOS 14+ · Apple Silicon.
+
+## 빌드 (개발자)
 
 macOS 14.0 이상, Xcode 커맨드라인 도구 필요.
 

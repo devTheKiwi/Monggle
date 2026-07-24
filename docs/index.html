@@ -328,7 +328,7 @@
     <p class="tag">맥 메뉴바에 사는 작고 반짝이는 미니 캘린더.<br>오늘 일정과 할 일을, 예쁘게.</p>
 
     <div class="hero-buttons">
-        <a href="https://github.com/devTheKiwi/Monggle/releases/latest" class="btn btn-primary">⬇︎ 다운로드</a>
+        <a href="#install" class="btn btn-primary">⬇︎ 설치하기</a>
         <a href="https://github.com/devTheKiwi/Monggle" class="btn btn-secondary">GitHub</a>
     </div>
 
@@ -438,19 +438,22 @@
 </section>
 
 <!-- 설치 -->
-<section class="install">
+<section class="install" id="install">
     <div class="wrap">
         <h2 class="section-title">설치</h2>
-        <p class="section-sub">소스에서 한 줄이면 끝 — Gatekeeper 경고도 없어요</p>
+        <p class="section-sub">터미널에 붙여넣기 한 줄이면 끝 — Xcode 없이도 돼요</p>
         <div class="code">
-            <button class="copy" onclick="copyCmd()">복사</button>
+            <button class="copy" onclick="copyRemote(this)">복사</button>
+            <span class="p">$ </span>curl -sL https://raw.githubusercontent.com/devTheKiwi/Monggle/main/remote-install.sh | bash
+        </div>
+        <p class="note">macOS 14+ · Apple Silicon · 빌드된 앱을 받아 바로 메뉴바에 · 경고창 없음</p>
+
+        <p class="or">— 개발자라면, 소스에서 —</p>
+        <div class="code">
+            <button class="copy" onclick="copyCmd(this)">복사</button>
             <span class="p">$ </span>git clone https://github.com/devTheKiwi/Monggle.git &amp;&amp; make -C Monggle install
         </div>
-        <p class="note">macOS 14+ · Apple Silicon · Xcode 커맨드라인 도구 필요</p>
-
-        <p class="or">— 또는 —</p>
-        <a href="https://github.com/devTheKiwi/Monggle/releases/latest" class="btn btn-secondary">⬇︎ Monggle.zip 다운로드</a>
-        <p class="note" style="margin-top:12px;">받은 앱은 처음 한 번만 우클릭 → 열기 (공증 전이라 그래요)</p>
+        <p class="note">Xcode 커맨드라인 도구 필요</p>
     </div>
 </section>
 
@@ -465,13 +468,15 @@
 </footer>
 
 <script>
-function copyCmd() {
-    var cmd = 'git clone https://github.com/devTheKiwi/Monggle.git && make -C Monggle install';
-    navigator.clipboard.writeText(cmd).then(function () {
-        var b = document.querySelector('.copy');
-        b.textContent = '복사됨!';
-        setTimeout(function () { b.textContent = '복사'; }, 2000);
-    });
+function flash(btn) {
+    btn.textContent = '복사됨!';
+    setTimeout(function () { btn.textContent = '복사'; }, 2000);
+}
+function copyRemote(btn) {
+    navigator.clipboard.writeText('curl -sL https://raw.githubusercontent.com/devTheKiwi/Monggle/main/remote-install.sh | bash').then(function () { flash(btn); });
+}
+function copyCmd(btn) {
+    navigator.clipboard.writeText('git clone https://github.com/devTheKiwi/Monggle.git && make -C Monggle install').then(function () { flash(btn); });
 }
 </script>
 
