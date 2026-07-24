@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Monggle</string>
+    <key>CFBundleDisplayName</key>
+    <string>몽글</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.rkskekfk.monggle</string>
+    <key>CFBundleExecutable</key>
+    <string>Monggle</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>오늘 일정을 달력에 예쁘게 보여주기 위해 캘린더 접근이 필요해요.</string>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>오늘 할 일을 함께 보여주기 위해 미리 알림 접근이 필요해요.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>오늘 일정을 달력에 예쁘게 보여주기 위해 캘린더 접근이 필요해요.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>오늘 할 일을 함께 보여주기 위해 미리 알림 접근이 필요해요.</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>몽글 · Mini Calendar</string>
+</dict>
+</plist>
