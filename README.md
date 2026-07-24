@@ -2,6 +2,8 @@
 
 맥 메뉴바에 사는 작고 반짝이는 미니 캘린더.
 
+🔗 **[홈페이지](https://devthekiwi.github.io/Monggle/)** · [다운로드](https://github.com/devTheKiwi/Monggle/releases/latest)
+
 macOS 캘린더 · 미리 알림과 바로 연결되고, 메뉴바에 오늘 날짜를 원하는 형식으로 띄웁니다.
 네이티브 Swift + SwiftUI로만 만들었고 외부 의존성이 없습니다.
 
