@@ -28,7 +28,7 @@ extension Color {
 /// 포인트 색 테마 — 설정에서 고를 수 있어.
 enum Theme: String, CaseIterable, Identifiable {
     case coral, lavender, mint, sky, butter
-    case peach, rose, grape, forest, ocean
+    case peach, cherry, lime, mocha, slate
 
     var id: String { rawValue }
 
@@ -40,10 +40,10 @@ enum Theme: String, CaseIterable, Identifiable {
         case .sky:      return "하늘"
         case .butter:   return "버터"
         case .peach:    return "피치"
-        case .rose:     return "로즈"
-        case .grape:    return "그레이프"
-        case .forest:   return "포레스트"
-        case .ocean:    return "오션"
+        case .cherry:   return "체리"
+        case .lime:     return "라임"
+        case .mocha:    return "모카"
+        case .slate:    return "슬레이트"
         }
     }
 
@@ -55,10 +55,10 @@ enum Theme: String, CaseIterable, Identifiable {
         case .sky:      return .dynamic(light: 0x3E9BFF, dark: 0x6FB6FF)
         case .butter:   return .dynamic(light: 0xE8A317, dark: 0xF5C24D)
         case .peach:    return .dynamic(light: 0xFF8F5E, dark: 0xFFA579)
-        case .rose:     return .dynamic(light: 0xED5A86, dark: 0xFB7AA0)
-        case .grape:    return .dynamic(light: 0xA96AD9, dark: 0xC08BEB)
-        case .forest:   return .dynamic(light: 0x2FAE6A, dark: 0x54C98A)
-        case .ocean:    return .dynamic(light: 0x2BB6C4, dark: 0x5AD2DE)
+        case .cherry:   return .dynamic(light: 0xE8453D, dark: 0xF56A62)
+        case .lime:     return .dynamic(light: 0x86B82C, dark: 0xA6D94A)
+        case .mocha:    return .dynamic(light: 0xB07B54, dark: 0xC79B76)
+        case .slate:    return .dynamic(light: 0x6E7A8A, dark: 0x93A0B0)
         }
     }
 
@@ -70,10 +70,10 @@ enum Theme: String, CaseIterable, Identifiable {
         case .sky:      return .dynamic(light: 0x5FC8EE, dark: 0x8ADCFF)
         case .butter:   return .dynamic(light: 0xF2C14E, dark: 0xFFD97A)
         case .peach:    return .dynamic(light: 0xFFB07A, dark: 0xFFC199)
-        case .rose:     return .dynamic(light: 0xFF85A6, dark: 0xFF9DB8)
-        case .grape:    return .dynamic(light: 0xC77BE0, dark: 0xD9A0F0)
-        case .forest:   return .dynamic(light: 0x62C98A, dark: 0x86E0A8)
-        case .ocean:    return .dynamic(light: 0x5FCFDC, dark: 0x8AE2EC)
+        case .cherry:   return .dynamic(light: 0xF56A4E, dark: 0xFF897A)
+        case .lime:     return .dynamic(light: 0xAAD24E, dark: 0xC6E86E)
+        case .mocha:    return .dynamic(light: 0xC99B6E, dark: 0xDBB68E)
+        case .slate:    return .dynamic(light: 0x8A94A2, dark: 0xAAB4C2)
         }
     }
 
