@@ -6,18 +6,98 @@ import AppKit
 struct CalendarPopover: View {
     @EnvironmentObject private var state: AppState
     @EnvironmentObject private var prefs: Prefs
+    @EnvironmentObject private var updater: Updater
 
     var body: some View {
         VStack(spacing: 10) {
+            if updater.showsBanner { UpdateBanner() }
             HeaderView()
             WeekdayRow()
             MonthGridView()
-            Divider().opacity(0.4)
+            Rectangle()
+                .fill(prefs.skin.hairline)
+                .frame(height: 1)
             EventListView()
         }
         .padding(14)
         .frame(width: 300)
         .fontDesign(.rounded)
+        .background(
+            SkinBackground(skin: prefs.skin, theme: prefs.theme, animate: prefs.sparkle.on)
+        )
+    }
+}
+
+// MARK: - 업데이트 배너
+
+struct UpdateBanner: View {
+    @EnvironmentObject private var updater: Updater
+    @EnvironmentObject private var prefs: Prefs
+
+    var body: some View {
+        Group {
+            switch updater.phase {
+            case .available(let r): available(r)
+            case .downloading:      busy("새 버전 내려받는 중…")
+            case .installing:       busy("설치하고 곧 다시 켜질 거예요…")
+            default:                EmptyView()
+            }
+        }
+    }
+
+    private func available(_ r: Release) -> some View {
+        HStack(spacing: 9) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(prefs.theme.gradient)
+                .autoShimmer(active: prefs.sparkle.on, period: 2.6, dur: 0.9, strength: 0.6)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text("새 버전 \(r.version)")
+                    .font(.system(size: 12.5, weight: .heavy))
+                Text("지금 업데이트할 수 있어요")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+
+            Button("업데이트") { updater.install(r) }
+                .buttonStyle(.borderedProminent)
+                .tint(prefs.theme.accent)
+                .controlSize(.small)
+                .font(.system(size: 11, weight: .bold))
+
+            Button { updater.dismissed = true } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .padding(3)
+            }
+            .buttonStyle(.plain)
+            .help("나중에")
+        }
+        .padding(9)
+        .background(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(prefs.theme.accent.opacity(0.15))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .stroke(prefs.theme.accent.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    private func busy(_ label: String) -> some View {
+        HStack(spacing: 9) {
+            ProgressView().controlSize(.small)
+            Text(label).font(.system(size: 11.5, weight: .semibold))
+            Spacer(minLength: 0)
+        }
+        .padding(9)
+        .background(
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(Color.primary.opacity(0.06))
+        )
     }
 }
 
@@ -26,6 +106,7 @@ struct CalendarPopover: View {
 struct HeaderView: View {
     @EnvironmentObject private var state: AppState
     @EnvironmentObject private var prefs: Prefs
+    @EnvironmentObject private var updater: Updater
 
     var body: some View {
         HStack(spacing: 2) {
@@ -42,7 +123,7 @@ struct HeaderView: View {
             iconButton("chevron.right", color: .secondary) { state.changeMonth(1) }
             iconButton("gearshape.fill", color: .secondary) {
                 PopoverBridge.close?()
-                SettingsWindow.shared.show(state: state, prefs: prefs)
+                SettingsWindow.shared.show(state: state, prefs: prefs, updater: updater)
             }
         }
     }
@@ -209,6 +290,7 @@ struct DotRow: View {
 struct EventListView: View {
     @EnvironmentObject private var state: AppState
     @EnvironmentObject private var prefs: Prefs
+    @State private var composing = false
 
     var body: some View {
         let sel = state.selected
@@ -224,6 +306,17 @@ struct EventListView: View {
                     .font(.system(size: 13.5, weight: .heavy))
                 if isToday { TodayPill() }
                 Spacer(minLength: 0)
+                if state.calendarAuthorized {
+                    HoverButton {
+                        withAnimation(.easeOut(duration: 0.15)) { composing.toggle() }
+                    } label: {
+                        Image(systemName: composing ? "xmark" : "plus")
+                            .font(.system(size: 11, weight: .heavy))
+                            .frame(width: 22, height: 22)
+                            .foregroundStyle(prefs.theme.accent)
+                    }
+                    .help(composing ? "취소" : "일정 추가")
+                }
             }
 
             if let holiday {
@@ -232,22 +325,194 @@ struct EventListView: View {
                     .foregroundStyle(Palette.sunday)
             }
 
-            if empty {
-                Text(state.calendarAuthorized ? "일정이 없어요 ✨" : "캘린더를 허용하면 일정이 보여요")
-                    .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+            if composing {
+                ComposeEventView(day: sel) {
+                    withAnimation(.easeOut(duration: 0.15)) { composing = false }
+                }
+            } else if empty {
+                EmptyDayView()
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         ForEach(events) { EventRow(event: $0) }
                         ForEach(reminders) { ReminderRow(reminder: $0) }
                     }
+                    .padding(.vertical, 1)
                 }
-                .frame(maxHeight: 148)
+                .frame(maxHeight: 168)
             }
         }
+        .onChange(of: state.selected) { composing = false }
+    }
+}
+
+// MARK: - 일정 추가 폼
+
+struct ComposeEventView: View {
+    @EnvironmentObject private var state: AppState
+    @EnvironmentObject private var prefs: Prefs
+    let day: Date
+    let done: () -> Void
+
+    @State private var title = ""
+    @State private var allDay = false
+    @State private var start = Date()
+    @State private var end = Date()
+    @State private var calendarID: String?
+    @State private var error: String?
+    @State private var loaded = false
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            TextField("무슨 일정인가요?", text: $title)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 12.5))
+                .focused($focused)
+                .onSubmit(save)
+
+            Toggle("종일", isOn: $allDay)
+                .toggleStyle(.checkbox)
+                .font(.system(size: 11.5, weight: .semibold))
+
+            if !allDay {
+                // 애플 캘린더처럼 직접 타이핑하거나 화살표로 올리고 내림
+                timeField("시작", $start)
+                timeField("종료", $end)
+            }
+
+            HStack(spacing: 6) {
+                Menu {
+                    ForEach(state.eventCalendars) { c in
+                        Button {
+                            calendarID = c.id
+                        } label: {
+                            Label(c.title, systemImage: "circle.fill")
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(selectedCalendar?.color ?? prefs.theme.accent)
+                            .frame(width: 7, height: 7)
+                        Text(selectedCalendar?.title ?? "캘린더")
+                            .font(.system(size: 11.5, weight: .semibold))
+                            .lineLimit(1)
+                    }
+                }
+                .menuStyle(.button)
+                .buttonStyle(.borderless)
+                .frame(maxWidth: 130, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                Button("추가", action: save)
+                    .font(.system(size: 12, weight: .bold))
+                    .buttonStyle(.borderedProminent)
+                    .tint(prefs.theme.accent)
+                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+
+            if let error {
+                Text(error)
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(Palette.sunday)
+            }
+        }
+        .padding(.vertical, 2)
+        .onAppear {
+            let s = defaultStart()
+            start = s
+            end = s.addingTimeInterval(3600)
+            calendarID = state.defaultCalendarID
+            focused = true
+            // onAppear 에서 넣은 값 때문에 아래 onChange 가 도는 걸 피하려고 한 박자 뒤에
+            DispatchQueue.main.async { loaded = true }
+        }
+        .onChange(of: start) { old, new in
+            // 시작을 옮기면 길이를 유지한 채 종료도 같이 옮김 (애플 캘린더와 같은 동작)
+            guard loaded, old != new else { return }
+            end = end.addingTimeInterval(new.timeIntervalSince(old))
+        }
+    }
+
+    private func timeField(_ label: String, _ value: Binding<Date>) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 28, alignment: .leading)
+            DatePicker("", selection: value, displayedComponents: .hourAndMinute)
+                .datePickerStyle(.stepperField)
+                .labelsHidden()
+                .font(.system(size: 12))
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var selectedCalendar: CalendarChoice? {
+        state.eventCalendars.first { $0.id == calendarID }
+    }
+
+    /// 오늘이면 다음 정각/30분, 다른 날이면 오전 9시
+    private func defaultStart() -> Date {
+        let cal = DateUtil.cal
+        if DateUtil.isSameDay(day, state.today) {
+            let now = Date()
+            let m = cal.component(.minute, from: now)
+            let bump = m < 30 ? 30 - m : 60 - m
+            return cal.date(bySetting: .second, value: 0,
+                            of: cal.date(byAdding: .minute, value: bump, to: now) ?? now) ?? now
+        }
+        return cal.date(bySettingHour: 9, minute: 0, second: 0, of: day) ?? day
+    }
+
+    /// 시/분만 떼어내 선택한 날짜에 붙임
+    private func onSelectedDay(_ time: Date) -> Date {
+        let hm = DateUtil.cal.dateComponents([.hour, .minute], from: time)
+        return DateUtil.cal.date(bySettingHour: hm.hour ?? 9, minute: hm.minute ?? 0,
+                                 second: 0, of: day) ?? day
+    }
+
+    private func save() {
+        let name = title.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+
+        // 시각 피커는 시/분만 고르니 날짜는 선택한 날로 옮겨 붙임
+        let from = onSelectedDay(start)
+        let to = onSelectedDay(end)
+
+        if let message = state.addEvent(title: name, start: from, end: to,
+                                        allDay: allDay, calendarID: calendarID) {
+            error = message
+        } else {
+            done()
+        }
+    }
+}
+
+struct EmptyDayView: View {
+    @EnvironmentObject private var state: AppState
+    @EnvironmentObject private var prefs: Prefs
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .fill(prefs.theme.accent.opacity(0.14))
+                    .frame(width: 38, height: 38)
+                Image(systemName: state.calendarAuthorized ? "cup.and.saucer.fill" : "lock.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(prefs.theme.accent)
+            }
+            .autoShimmer(active: prefs.sparkle.on, period: 5.0, dur: 0.9, strength: 0.5)
+
+            Text(state.calendarAuthorized ? "오늘은 비어 있어요" : "캘린더를 허용하면 일정이 보여요")
+                .font(.system(size: 12.5, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
     }
 }
 
@@ -268,54 +533,144 @@ struct TodayPill: View {
 }
 
 struct EventRow: View {
+    @EnvironmentObject private var state: AppState
     @EnvironmentObject private var prefs: Prefs
     let event: EventItem
+    @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 9) {
-            Circle()
-                .fill(event.color)
-                .frame(width: 8, height: 8)
-                .shadow(color: event.color.opacity(0.4), radius: 2)
-            Text(event.isAllDay ? "종일" : DateUtil.timeFmt.string(from: event.start))
-                .font(.system(size: 11.5, weight: .bold))
-                .foregroundStyle(event.isAllDay ? prefs.theme.accent : Color.secondary)
-                .frame(width: 58, alignment: .leading)
-            Text(event.title)
-                .font(.system(size: 13, weight: .medium))
-                .lineLimit(1)
-            Spacer(minLength: 0)
+        Button {
+            PopoverBridge.close?()
+            state.openInCalendar(event)
+        } label: {
+            content
         }
-        .padding(.vertical, 5)
-        .padding(.horizontal, 6)
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("캘린더 앱에서 열기")
+    }
+
+    private var content: some View {
+        HStack(spacing: 9) {
+            Capsule()
+                .fill(event.color)
+                .frame(width: 3.5)
+                .shadow(color: event.color.opacity(0.5), radius: 2)
+
+            if event.isAllDay {
+                Text("종일")
+                    .font(.system(size: 10.5, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(event.color))
+                    .frame(width: 52, alignment: .leading)
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(DateUtil.timeFmt.string(from: event.start))
+                        .font(.system(size: 11.5, weight: .bold))
+                    if event.hasDuration {
+                        Text(DateUtil.timeFmt.string(from: event.end))
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .foregroundStyle(.secondary)
+                .frame(width: 52, alignment: .leading)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(event.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    CategoryTag(name: event.category, color: event.color)
+                    if let place = event.location {
+                        Text("·").foregroundStyle(.quaternary)
+                        Label(place, systemImage: "mappin")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "arrow.up.forward.app")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.tertiary)
+                .opacity(hovering ? 1 : 0)
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(hovering ? prefs.theme.accent.opacity(0.14) : prefs.skin.rowFill)
+        )
+        .contentShape(Rectangle())
+    }
+}
+
+/// 일정이 속한 캘린더(카테고리)를 색 점과 함께
+struct CategoryTag: View {
+    let name: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Circle()
+                .fill(color)
+                .frame(width: 5, height: 5)
+            Text(name)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(color)
+                .lineLimit(1)
+        }
     }
 }
 
 struct ReminderRow: View {
     @EnvironmentObject private var state: AppState
+    @EnvironmentObject private var prefs: Prefs
     let reminder: ReminderItem
+    @State private var done = false
 
     var body: some View {
         HStack(spacing: 9) {
+            Capsule()
+                .fill(reminder.color.opacity(0.55))
+                .frame(width: 3.5)
+
             Button {
+                withAnimation(.easeOut(duration: 0.2)) { done = true }
                 state.toggleReminder(reminder)
             } label: {
-                Image(systemName: "circle")
-                    .font(.system(size: 13, weight: .bold))
+                Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(reminder.color)
             }
             .buttonStyle(.plain)
             .help("완료로 표시")
-            Text("할 일")
-                .font(.system(size: 11.5, weight: .bold))
-                .foregroundStyle(.secondary)
-                .frame(width: 58, alignment: .leading)
-            Text(reminder.title)
-                .font(.system(size: 13, weight: .medium))
-                .lineLimit(1)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(reminder.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .strikethrough(done, color: .secondary)
+                    .opacity(done ? 0.45 : 1)
+                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    Text("할 일")
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(.tertiary)
+                    Text("·").foregroundStyle(.quaternary)
+                    CategoryTag(name: reminder.category, color: reminder.color)
+                }
+            }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 5)
-        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(prefs.skin.rowFill)
+        )
     }
 }

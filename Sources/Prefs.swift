@@ -110,6 +110,9 @@ final class Prefs: ObservableObject {
     @Published var colorful: Bool { didSet { d.set(colorful, forKey: K.colorful) } }
     @Published var sparkle: SparkleLevel { didSet { d.set(sparkle.rawValue, forKey: K.sparkle) } }
     @Published var background: LabelBackground { didSet { d.set(background.rawValue, forKey: K.bg) } }
+    @Published var skin: Skin { didSet { d.set(skin.rawValue, forKey: K.skin) } }
+    // 투명도 — 뺐음 (Skin.swift 주석 참고)
+    // @Published var transparency: Double { didSet { d.set(transparency, forKey: K.alpha) } }
 
     private enum K {
         static let style = "labelStyle"
@@ -122,6 +125,8 @@ final class Prefs: ObservableObject {
         static let colorful = "colorfulMenuBar"
         static let sparkle = "sparkleLevel"
         static let bg = "labelBackground"
+        static let skin = "skin"
+        // static let alpha = "transparency"
     }
 
     init() {
@@ -136,6 +141,8 @@ final class Prefs: ObservableObject {
         colorful = d.bool(forKey: K.colorful)
         sparkle = SparkleLevel(rawValue: d.string(forKey: K.sparkle) ?? "") ?? .gentle
         background = LabelBackground(rawValue: d.string(forKey: K.bg) ?? "") ?? .none
+        skin = Skin(rawValue: d.string(forKey: K.skin) ?? "") ?? .plain
+        // transparency = min(max(d.double(forKey: K.alpha), 0), 1)
     }
 
     var firstWeekday: Int { mondayFirst ? 2 : 1 }

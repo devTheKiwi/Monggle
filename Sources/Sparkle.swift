@@ -41,6 +41,19 @@ enum Sparkle {
         return pow(sin(x * .pi), 1.6)
     }
 
+    /// `TwinkleShape` 과 같은 모양을 Core Graphics 로 (메뉴바 합성용)
+    static func twinklePath(center c: CGPoint, radius r: CGFloat) -> CGPath {
+        let k = r * 0.28
+        let p = CGMutablePath()
+        p.move(to: CGPoint(x: c.x, y: c.y - r))
+        p.addQuadCurve(to: CGPoint(x: c.x + r, y: c.y), control: CGPoint(x: c.x + k, y: c.y - k))
+        p.addQuadCurve(to: CGPoint(x: c.x, y: c.y + r), control: CGPoint(x: c.x + k, y: c.y + k))
+        p.addQuadCurve(to: CGPoint(x: c.x - r, y: c.y), control: CGPoint(x: c.x - k, y: c.y + k))
+        p.addQuadCurve(to: CGPoint(x: c.x, y: c.y - r), control: CGPoint(x: c.x - k, y: c.y - k))
+        p.closeSubpath()
+        return p
+    }
+
     /// 오늘 동그라미 주변에 뿌릴 기본 배치
     static let aroundDay: [Spot] = [
         Spot(x: -16, y: -13, size: 8,   phase: 0.00),

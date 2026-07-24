@@ -127,6 +127,15 @@ enum DateUtil {
     static let dayHeader: DateFormatter = fmt("M월 d일 EEEE")
     static let timeFmt: DateFormatter = fmt("a h:mm")
 
+    /// 캘린더 앱 `ical://` 링크에 쓰는 UTC 타임스탬프
+    static let icalStamp: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+        return f
+    }()
+
     /// 사용자 지정 패턴용 — 만든 포매터는 재사용하려고 캐시해 둠.
     private static var cache: [String: DateFormatter] = [:]
 

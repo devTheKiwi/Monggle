@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 
 @main
 enum Monggle {
@@ -21,10 +22,12 @@ enum PopoverBridge {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let state = AppState()
     private let prefs = Prefs()
+    private let updater = Updater()
 
     private var item: NSStatusItem!
     private var popover: NSPopover!
     private var bar: MenuBarController!
+    private var bag: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -35,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             rootView: CalendarPopover()
                 .environmentObject(state)
                 .environmentObject(prefs)
+                .environmentObject(updater)
         )
         // 이게 없으면 팝오버가 SwiftUI 실제 높이를 몰라서 위아래가 잘림
         host.sizingOptions = [.preferredContentSize]
@@ -48,6 +52,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         bar.start()
 
         PopoverBridge.close = { [weak self] in self?.popover.performClose(nil) }
+
+        applySkin()
+        prefs.objectWillChange
+            .sink { [weak self] _ in
+                DispatchQueue.main.async { self?.applySkin() }
+            }
+            .store(in: &bag)
+
+        updater.start()
+    }
+
+    /// 어두운 스킨이면 팝오버 외형까지 다크로 — 화살표와 모서리가 같이 어두워짐
+    private func applySkin() {
+        popover.appearance = prefs.skin.isDark ? NSAppearance(named: .darkAqua) : nil
     }
 
     @objc private func togglePopover() {

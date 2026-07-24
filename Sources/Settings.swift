@@ -8,11 +8,12 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
     static let shared = SettingsWindow()
     private var window: NSWindow?
 
-    func show(state: AppState, prefs: Prefs) {
+    func show(state: AppState, prefs: Prefs, updater: Updater) {
         if window == nil {
             let root = SettingsView()
                 .environmentObject(state)
                 .environmentObject(prefs)
+                .environmentObject(updater)
             let w = NSWindow(contentViewController: NSHostingController(rootView: root))
             w.title = "몽글 설정"
             w.styleMask = [.titled, .closable, .miniaturizable]
@@ -39,8 +40,10 @@ struct SettingsView: View {
                 Card("메뉴바 표시") { StyleSection() }
                 Card("색과 반짝임") { SparkleSection() }
                 Card("이모지") { EmojiSection() }
+                Card("달력 스킨") { SkinSection() }
                 Card("달력") { CalendarSection() }
                 Card("일반") { GeneralSection() }
+                Card("업데이트") { UpdateSection() }
             }
             .padding(20)
         }
@@ -305,6 +308,90 @@ struct EmojiChip: View {
     }
 }
 
+// MARK: - 달력 스킨
+
+struct SkinSection: View {
+    @EnvironmentObject private var prefs: Prefs
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(Skin.allCases) { SkinChip(skin: $0) }
+        }
+
+        // 투명도 슬라이더 — 뺐음 (Skin.swift 주석 참고)
+        //
+        // Divider().opacity(0.4)
+        //
+        // HStack(spacing: 10) {
+        //     Text("투명도").font(.system(size: 12.5, weight: .medium))
+        //     Slider(value: $prefs.transparency, in: 0...1)
+        //     Text("\(Int(prefs.transparency * 100))%")
+        //         .font(.system(size: 11.5, weight: .semibold, design: .monospaced))
+        //         .foregroundStyle(.secondary)
+        //         .frame(width: 38, alignment: .trailing)
+        // }
+    }
+}
+
+struct SkinChip: View {
+    @EnvironmentObject private var prefs: Prefs
+    let skin: Skin
+
+    var body: some View {
+        let on = prefs.skin == skin
+
+        Button {
+            prefs.skin = skin
+        } label: {
+            VStack(spacing: 5) {
+                ZStack {
+                    Rectangle().fill(Color(nsColor: .windowBackgroundColor))
+                    // 미리보기는 움직이지 않게 (설정 창에서 5개가 동시에 돌면 낭비)
+                    SkinBackground(skin: skin, theme: prefs.theme, animate: false)
+                    MiniCalendar(dark: skin.isDark, accent: prefs.theme.accent)
+                }
+                .frame(width: 62, height: 46)
+                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .stroke(on ? prefs.theme.accent : Color.primary.opacity(0.12),
+                                lineWidth: on ? 2 : 1)
+                )
+
+                Text(skin.label)
+                    .font(.system(size: 10.5, weight: on ? .heavy : .medium))
+                    .foregroundStyle(on ? .primary : .secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// 스킨 썸네일 안에 들어가는 아주 작은 달력 흉내
+struct MiniCalendar: View {
+    let dark: Bool
+    let accent: Color
+
+    var body: some View {
+        VStack(spacing: 3) {
+            ForEach(0..<3, id: \.self) { row in
+                HStack(spacing: 3) {
+                    ForEach(0..<5, id: \.self) { col in
+                        if row == 1 && col == 2 {
+                            Circle().fill(accent).frame(width: 5, height: 5)
+                        } else {
+                            Circle()
+                                .fill(dark ? Color.white.opacity(0.45) : Color.primary.opacity(0.28))
+                                .frame(width: 3.5, height: 3.5)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - 달력
 
 struct CalendarSection: View {
@@ -398,9 +485,7 @@ struct GeneralSection: View {
             Divider().opacity(0.4)
 
             HStack {
-                Text("몽글 \(version)")
-                    .font(.system(size: 11.5, weight: .medium))
-                    .foregroundStyle(.secondary)
+                Text("몽글").font(.system(size: 11.5, weight: .bold)).foregroundStyle(.secondary)
                 Spacer()
                 Button("새로고침") { state.reload() }
                     .font(.system(size: 12, weight: .semibold))
@@ -409,9 +494,89 @@ struct GeneralSection: View {
             }
         }
     }
+}
 
-    private var version: String {
-        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0"
+// MARK: - 업데이트
+
+struct UpdateSection: View {
+    @EnvironmentObject private var updater: Updater
+    @EnvironmentObject private var prefs: Prefs
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("현재 버전 \(updater.currentVersion)")
+                        .font(.system(size: 12.5, weight: .semibold))
+                    statusLine
+                }
+                Spacer()
+                Button {
+                    Task { await updater.check(manual: true) }
+                } label: {
+                    if case .checking = updater.phase {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Text("업데이트 확인")
+                    }
+                }
+                .font(.system(size: 12, weight: .semibold))
+                .disabled(busy)
+            }
+
+            if case .available(let r) = updater.phase {
+                Button {
+                    updater.install(r)
+                } label: {
+                    Label("새 버전 \(r.version) 설치하고 재실행", systemImage: "arrow.down.circle.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(prefs.theme.accent)
+
+                if !r.notes.isEmpty {
+                    ScrollView {
+                        Text(r.notes)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: 76)
+                }
+            }
+
+            Toggle("켤 때 자동으로 확인", isOn: $updater.autoCheck)
+                .font(.system(size: 12.5, weight: .medium))
+        }
+    }
+
+    private var busy: Bool {
+        switch updater.phase {
+        case .checking, .downloading, .installing: return true
+        default: return false
+        }
+    }
+
+    @ViewBuilder private var statusLine: some View {
+        switch updater.phase {
+        case .upToDate:
+            tag("최신 버전이에요 ✨", .secondary)
+        case .available(let r):
+            tag("새 버전 \(r.version)가 있어요", prefs.theme.accent)
+        case .downloading:
+            tag("내려받는 중…", .secondary)
+        case .installing:
+            tag("설치하고 곧 재실행돼요…", .secondary)
+        case .failed(let m):
+            tag(m, Palette.sunday)
+        default:
+            EmptyView()
+        }
+    }
+
+    private func tag(_ text: String, _ color: Color) -> some View {
+        Text(text).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(color)
     }
 }
 

@@ -9,7 +9,9 @@ RES_DIR    = $(CONTENTS)/Resources
 SRC        = $(wildcard Sources/*.swift)
 SWIFTC     = xcrun swiftc
 
-.PHONY: all build app run install clean
+DIST       = Monggle.zip
+
+.PHONY: all build app run install zip release clean
 
 all: run
 
@@ -44,5 +46,18 @@ install: app
 	@open /Applications/$(APP_BUNDLE)
 	@echo "✅ /Applications 에 설치 완료 — 이제 로그인 시 자동 시작도 켤 수 있어"
 
+# 릴리스에 첨부할 zip. 인앱 업데이터가 이 파일을 받아 자기 자신을 교체함.
+zip: app
+	@rm -f $(DIST)
+	@ditto -c -k --keepParent $(APP_BUNDLE) $(DIST)
+	@echo "📦 $(DIST) 생성 완료"
+
+# 버전 태그로 GitHub 릴리스를 만들고 zip 을 올림.
+# 버전은 Info.plist 의 CFBundleShortVersionString 를 그대로 씀 — 새 버전이면 먼저 거기부터 올려.
+release: zip
+	@v=$$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' Info.plist); \
+	echo "🚀 릴리스 v$$v 만드는 중…"; \
+	gh release create "v$$v" $(DIST) --title "몽글 v$$v" --generate-notes
+
 clean:
-	@rm -rf $(BUILD_DIR) $(APP_BUNDLE)
+	@rm -rf $(BUILD_DIR) $(APP_BUNDLE) $(DIST)
