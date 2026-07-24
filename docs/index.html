@@ -273,19 +273,28 @@
     .code {
         max-width: 640px; margin: 0 auto 14px;
         background: #1a1530; color: #7ee7c4;
-        border-radius: 14px; padding: 18px 20px;
-        font-family: 'SF Mono', ui-monospace, monospace; font-size: 14px;
-        text-align: left; position: relative; overflow-x: auto;
-        box-shadow: var(--shadow); white-space: nowrap;
+        border-radius: 14px;
+        text-align: left; position: relative;
+        box-shadow: var(--shadow);
+    }
+    /* 스크롤은 이 안쪽만 — 버튼은 바깥 .code 에 고정이라 안 따라감 */
+    .code-scroll {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 18px 20px;
+        padding-right: 72px;   /* 복사 버튼 자리 확보 */
+        font-family: 'SF Mono', ui-monospace, monospace;
+        font-size: 14px;
     }
     .code .p { color: #6c6690; user-select: none; }
     .copy {
-        position: absolute; top: 11px; right: 11px;
-        background: rgba(255,255,255,0.1); border: none; color: #b9b3d6;
+        position: absolute; top: 11px; right: 11px; z-index: 2;
+        background: #322a52; border: none; color: #cfc9e6;
         padding: 5px 12px; border-radius: 7px; cursor: pointer; font-size: 12px;
+        box-shadow: -8px 0 10px 4px #1a1530;   /* 왼쪽으로 코드색 페이드 — 스크롤 텍스트 안 비침 */
         transition: background 0.2s, color 0.2s;
     }
-    .copy:hover { background: var(--coral); color: #fff; }
+    .copy:hover { background: var(--coral); color: #fff; box-shadow: -8px 0 10px 4px #1a1530; }
     .install .note { font-size: 13px; color: var(--ink-dim); margin-bottom: 30px; }
     .install .or { color: var(--ink-dim); font-size: 13px; margin: 4px 0 14px; }
 
@@ -444,14 +453,14 @@
         <p class="section-sub">터미널에 붙여넣기 한 줄이면 끝 — Xcode 없이도 돼요</p>
         <div class="code">
             <button class="copy" onclick="copyRemote(this)">복사</button>
-            <span class="p">$ </span>curl -sL https://raw.githubusercontent.com/devTheKiwi/Monggle/main/remote-install.sh | bash
+            <div class="code-scroll"><span class="p">$ </span>curl -sL https://raw.githubusercontent.com/devTheKiwi/Monggle/main/remote-install.sh | bash</div>
         </div>
         <p class="note">macOS 14+ · Apple Silicon · 빌드된 앱을 받아 바로 메뉴바에 · 경고창 없음</p>
 
         <p class="or">— 개발자라면, 소스에서 —</p>
         <div class="code">
             <button class="copy" onclick="copyCmd(this)">복사</button>
-            <span class="p">$ </span>git clone https://github.com/devTheKiwi/Monggle.git &amp;&amp; make -C Monggle install
+            <div class="code-scroll"><span class="p">$ </span>git clone https://github.com/devTheKiwi/Monggle.git &amp;&amp; make -C Monggle install</div>
         </div>
         <p class="note">Xcode 커맨드라인 도구 필요</p>
     </div>
