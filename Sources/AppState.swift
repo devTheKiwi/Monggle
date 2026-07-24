@@ -67,9 +67,21 @@ final class AppState: ObservableObject {
         guard !started else { return }
         started = true
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
+        enableLoginOnFirstRun()
         await requestAccess()
         reload()
         scheduleMidnight()
+    }
+
+    /// 처음 켤 때 한 번만 "로그인 시 자동 시작"을 기본으로 켜줌.
+    /// 그 뒤로는 사용자가 끈 걸 존중해서 다시 켜지 않음.
+    private func enableLoginOnFirstRun() {
+        let key = "didAutoEnableLogin"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        if SMAppService.mainApp.status != .enabled {
+            setLaunchAtLogin(true)
+        }
     }
 
     func requestAccess() async {
