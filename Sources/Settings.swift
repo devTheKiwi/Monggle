@@ -431,7 +431,7 @@ struct CalendarSection: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("포인트 색").font(.system(size: 12.5, weight: .medium))
-                HStack(spacing: 8) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 10) {
                     ForEach(Theme.allCases) { ThemeChip(theme: $0) }
                 }
             }
