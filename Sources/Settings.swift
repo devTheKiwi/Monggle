@@ -257,7 +257,9 @@ struct EmojiSection: View {
     @EnvironmentObject private var prefs: Prefs
 
     private let choices = ["📅", "🗓️", "✨", "🌸", "🍡", "🐣", "🌙", "☕️", "🧸", "🍀", "⭐️", "🫧"]
+    private let kaomoji = ["(｡•̀ᴗ-)✧", "ʕ•ᴥ•ʔ", "(´｡• ᵕ •｡`)", "( ˶ˆ ᵕ ˆ˶ )", "♡( ᐛ )", "੭˃ᴗ˂੭"]
     private let cols = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
+    private let kcols = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -266,14 +268,27 @@ struct EmojiSection: View {
                 ForEach(choices, id: \.self) { EmojiChip(value: $0, display: $0) }
             }
 
-            HStack(spacing: 8) {
-                Text("직접 입력")
-                    .font(.system(size: 11.5, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                TextField("", text: $prefs.emoji)
+            Text("이모티콘")
+                .font(.system(size: 10.5, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .padding(.top, 2)
+            LazyVGrid(columns: kcols, spacing: 6) {
+                ForEach(kaomoji, id: \.self) { EmojiChip(value: $0, display: $0, size: 12) }
+            }
+
+            HStack(spacing: 6) {
+                TextField("직접 입력 — 이모지·이모티콘 붙여넣기 OK", text: $prefs.emoji)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 90)
                     .font(.system(size: 13))
+                if !prefs.emoji.isEmpty {
+                    Button { prefs.emoji = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("지우기")
+                }
             }
         }
     }
@@ -283,6 +298,7 @@ struct EmojiChip: View {
     @EnvironmentObject private var prefs: Prefs
     let value: String
     let display: String
+    var size: CGFloat = 16
 
     var body: some View {
         let on = prefs.emoji == value
@@ -291,7 +307,9 @@ struct EmojiChip: View {
             prefs.emoji = value
         } label: {
             Text(display)
-                .font(.system(size: value.isEmpty ? 10.5 : 16, weight: .bold))
+                .font(.system(size: value.isEmpty ? 10.5 : size, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
                 .frame(height: 30)
                 .background(
