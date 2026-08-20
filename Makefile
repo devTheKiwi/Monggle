@@ -7,11 +7,12 @@ CONTENTS   = $(APP_BUNDLE)/Contents
 MACOS_DIR  = $(CONTENTS)/MacOS
 RES_DIR    = $(CONTENTS)/Resources
 SRC        = $(wildcard Sources/*.swift)
+TEST_SRC   = $(wildcard Tests/*.swift)
 SWIFTC     = xcrun swiftc
 
 DIST       = Monggle.zip
 
-.PHONY: all build app run install zip release clean
+.PHONY: all build app run install zip release test clean
 
 all: run
 
@@ -58,6 +59,17 @@ release: zip
 	@v=$$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' Info.plist); \
 	echo "🚀 릴리스 v$$v 만드는 중…"; \
 	gh release create "v$$v" $(DIST) --title "몽글 v$$v" --generate-notes
+
+# 회귀 테스트. 실패하면 0 이 아닌 코드로 끝나므로 CI 에도 그대로 쓸 수 있다.
+test:
+	@mkdir -p $(BUILD_DIR)
+	@$(SWIFTC) \
+	  -swift-version 5 \
+	  -parse-as-library \
+	  -target arm64-apple-macos$(MIN_MACOS) \
+	  -o $(BUILD_DIR)/$(APP_NAME)Tests \
+	  $(TEST_SRC)
+	@$(BUILD_DIR)/$(APP_NAME)Tests $(CURDIR)
 
 clean:
 	@rm -rf $(BUILD_DIR) $(APP_BUNDLE) $(DIST)

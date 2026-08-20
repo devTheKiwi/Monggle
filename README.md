@@ -37,8 +37,24 @@ macOS 14.0 이상, Xcode 커맨드라인 도구 필요.
 ```sh
 make run       # 빌드 후 바로 실행
 make install   # /Applications 에 설치하고 실행
+make test      # 회귀 테스트
 make clean
 ```
+
+## 테스트
+
+Xcode 프로젝트 없이 `swiftc` 로만 굽는 구조라 XCTest 를 못 쓴다. 대신 `Tests/` 에
+실패하면 0 이 아닌 코드로 끝나는 작은 실행 파일을 두고 `make test` 로 돌린다.
+새 테스트는 파일을 하나 더 놓고 `TestMain.swift` 의 `check(...)` 에 한 줄 추가하면 된다.
+
+| 파일 | 지키는 것 |
+|---|---|
+| `BurstRaceTest.swift` | 반짝임을 끄면 메뉴바 광택이 남지 않는다 |
+| `MenuBarSourceGuard.swift` | `MenuBar.swift` 가 예전 방식으로 되돌아가지 않는다 |
+
+`BurstRaceTest` 는 `NSStatusItem` 에 그리는 원본을 헤드리스로 못 돌려서 타이머 구조만
+**옮겨 와 재현**한다. 그래서 그것만으로는 실제 `MenuBar.swift` 의 회귀를 못 잡는다.
+그 구멍을 `MenuBarSourceGuard` 가 소스를 직접 읽어서 막는다 — 둘이 한 쌍이다.
 
 ## 새 버전 내보내기
 
@@ -70,6 +86,7 @@ make clean
 | `Updater.swift` | GitHub 릴리스 확인 · 다운로드 · 자기 교체 |
 | `AppState.swift` | EventKit 연동 (일정·미리알림 읽기/추가) |
 | `Support.swift` | 색 테마, 날짜 유틸, 공휴일 표 |
+| `Tests/` | 회귀 테스트 (`make test`) |
 
 ### 메뉴바에 색을 넣은 방법
 
