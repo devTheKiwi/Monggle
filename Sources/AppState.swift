@@ -96,10 +96,14 @@ final class AppState: ObservableObject {
         loadReminders()
     }
 
+    /// 그리드가 덮는 범위. 주 시작 요일(일/월)에 따라 그리드가 앞뒤로 최대 6일까지
+    /// 밀리는데 여기선 그 설정을 모르니, 한 주씩 넉넉히 잡아 어느 쪽이든 다 덮는다.
     private func visibleRange() -> (Date, Date) {
         let days = DateUtil.gridDays(for: visibleMonth)
-        let start = days.first ?? visibleMonth
-        let end = DateUtil.cal.date(byAdding: .day, value: 1, to: days.last ?? visibleMonth) ?? visibleMonth
+        let first = days.first ?? visibleMonth
+        let last = days.last ?? visibleMonth
+        let start = DateUtil.cal.date(byAdding: .day, value: -7, to: first) ?? first
+        let end = DateUtil.cal.date(byAdding: .day, value: 8, to: last) ?? last
         return (start, end)
     }
 

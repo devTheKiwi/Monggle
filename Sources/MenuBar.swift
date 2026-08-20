@@ -202,6 +202,8 @@ final class MenuBarController {
 
     private func paint(_ progress: Double?) {
         guard let base, let button = item.button else { return }
+        // 반짝임이 꺼져 있으면 어떤 경로로 들어오든 광택·별은 얹지 않는다
+        let progress = prefs.sparkle.on ? progress : nil
         let w = base.width, h = base.height
         guard let ctx = canvas(w, h) else { return }
 
@@ -289,7 +291,7 @@ final class MenuBarController {
             return
         }
         burstTimer = Timer.scheduledTimer(withTimeInterval: period, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.runBurst() }
+            MainActor.assumeIsolated { self?.runBurst() }
         }
         runBurst()
     }
@@ -299,8 +301,12 @@ final class MenuBarController {
         let total = Int(burstLength * frameRate)
         var frame = 0
 
+        // Task 로 넘기면 invalidate() 가 이미 큐에 올라간 프레임까지는 못 막는다.
+        // 반짝임을 끄는 순간 그 늦은 프레임이 광택을 다시 칠하고, 그 뒤로는 아무도
+        // 안 그리니까 광택이 그대로 얼어붙었음. 타이머는 어차피 메인 런루프에서
+        // 도니 홉 없이 그 자리에서 처리한다.
         frameTimer = Timer.scheduledTimer(withTimeInterval: 1 / frameRate, repeats: true) { [weak self] t in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 guard let self else { t.invalidate(); return }
                 frame += 1
                 if frame >= total {
